@@ -1,11 +1,7 @@
 #bash
 
-# For use with home Mac
-# MacPorts Installer addition on 2009-09-13_at_17:42:32: adding an appropriate PATH variable for use with MacPorts.
-# Wrapped for safety on the University of Waterloo (UW) systems; the
-# DONE_ENVIRONMENT environment variable will be set if any system-specific
-# setup has been done already.
-if [[ -z "$DONE_ENVIRONMENT" ]]; then
+# For use with Mac systems that make use of MacPorts.
+if [[ -d '/opt/local/bin' ]]; then
    export PATH=/opt/local/bin:/opt/local/sbin:$PATH
 fi
 
@@ -17,50 +13,14 @@ fi
 export SHELL="$BASH"
 
 
-# At UW, many shared accounts make use of the REMOTEUSER environment
-# variable to give individual users automatic access to their personal
-# settings.
-#
-# Make sure that if I "source" this on the course account, the
-# REMOTEUSER is always me.
-REMOTEUSER=tavaskor
-
-
-# The ISG account on the UW systems has a cs-setup script that provides
-# a number of additional system-specific beneficial settings.
-#
-# This first tries to find the script in a location where I'm likely to
-# have checked it out of subversion and be working on it.  Next, it searches
-# the standard location for the script.  If this can't be found, then
-# the showpath command (a useful UW-specific utility which has package names to
-# add multiple destinations to the path, eliminates duplicate entries, etc.)
-# will be used to extend PATH and MANPATH.  If *that* does not exist, hope
-# that PATH and MANPATH are already reasonable, and just make sure that
-# the local account's bin/ directory is at the front of the PATH.
-if [[ "$USER" == tavaskor || -z "$DONE_ENVIRONMENT" ]]; then
-   # Try to get good defaults for PATH, MANPATH, etc.
-   # Base this first on a testing system in ISG before trying the default.
-   if [ -r /u/isg/u/tavaskor/working/pub/bin/cs-setup.bash ]; then
-      . /u/isg/u/tavaskor/working/pub/bin/cs-setup.bash
-   elif [ -r /u/isg/pub/bin/cs-setup.bash ]; then
-      . /u/isg/pub/bin/cs-setup.bash
-   else
-      if [ -x /bin/showpath ] ; then
-         export PATH=`/bin/showpath usedby=user $HOME/bin gnu standard current`
-         export MANPATH=`/bin/showpath class=man gnu standard`
-      else
-         export PATH="$HOME/bin:$PATH"
-      fi
-   fi
+# Add my bin to the front of the PATH, if it's there.
+# This should be the final modification to PATH in this configuration file.
+if [[ -d "$HOME/bin" ]]; then
+   export PATH="$HOME/bin:$PATH"
 fi
 
 
-# This configuration is inherited from UW.
-# As I don't run a mail server elsewhere, it's harmless elsewhere.
-export MAIL; MAIL=${MAIL-"/usr/spool/mail/$USER"}
-
-
-# Personal configuration
+# Personal configuration preferences
 export EDITOR=$(type -P vim 2>/dev/null)
 export PAGER=$(type -P less 2>/dev/null)
 IGNOREEOF=10 # Require very persistent ctrl+d pressing before accepting it.
@@ -71,7 +31,6 @@ set -o vi
 shopt -s extglob
 
 
-
 # Use colour ls.
 # If this system is a Mac, target BSD ls.
 # Otherwise, assume that GNU ls is the default.
@@ -80,14 +39,12 @@ if [[ "$(uname -s)" = 'Darwin' ]]; then
    export LSCOLORS=GxFxDxDxhxDgDxabagacad
    alias ls='ls -F -G'
 else
-   # Check various home directories for directory colour configuration,
-   # then check the same directory as this file.
-   if [[ -r "$HOME/.dircolorsrc" ]]; then 
-      eval $(dircolors -b "$HOME/.dircolorsrc")
-   elif [[ -r "$HOME/u/$REMOTEUSER/.dircolorsrc" ]]; then
-      eval $(dircolors -b "$HOME/u/$REMOTEUSER/.dircolorsrc")
-   elif [[ -r "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc ]]; then
+   # Check the same directory as this file for configuration in case of testing.
+   # Fall back to the home directory, although that's likely to be this directory.
+   if [[ -r "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc ]]; then
       eval $(dircolors -b "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc)
+   elif [[ -r "$HOME/.dircolorsrc" ]]; then 
+      eval $(dircolors -b "$HOME/.dircolorsrc")
    fi
    alias ls='ls -F --color=auto'
 fi
@@ -116,11 +73,6 @@ alias srcgrep='find . -name .svn -prune -o -name "*~" -prune -o -name ".nfs*" -p
 # that any missing files would go unnoticed anyway.
 alias svnst="svn st | grep -v '^?'"
 
-
-# Any extra system-specific information that doesn't go in this general file.
-if [ -r ~/.aliases.bash ]; then
-   . ~/.aliases.bash
-fi
 
 
 # Helper functions
@@ -174,7 +126,7 @@ absolute ()
       fi;
    done
 
-   # If we get this far... give up.
+   # If this gets this far... give up.
    # Overwrite the absolute function with one that will ignore
    # arguments and just dump an error message.
    absolute () 
@@ -186,29 +138,7 @@ absolute ()
 }
 
 
-# On the UW systems' shared accounts, there would frequently be special
-# subdirectories of the account for individual users' files (shell and
-# utility configuration, etc.).  While working from the shell, it was
-# often inconvenient to have this subdirectory considered the HOME directory,
-# but it would need to be upon startup so the user's shell configuration
-# files would be read.
-#
-# This function gave me a quick way to switch between HOME directories
-# once logged in.
-h () {
-   if [[ "$HOME" = "$(absolute /u/$USER)" ]]; then
-      if [[ -d "/u/$USER/u/$REMOTEUSER" ]]; then
-         export HOME="$(absolute /u/$USER/u/$REMOTEUSER)"
-      fi
-   else
-      export HOME="$(absolute /u/$USER)"
-   fi
-   cd
-   echo $HOME
-}
-
-
-# Eliminate temporary/backup files that we no longer want to see.
+# Eliminate temporary/backup files that I no longer want to see.
 # Perform this task only in the current directory by default, but
 # allow it to be done recursively.
 cleanup () {
