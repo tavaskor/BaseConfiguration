@@ -164,9 +164,15 @@ cleanup () {
    # Explicitly name the type as file to avoid matching directories.
    find . "${rec[@]}" -type f \( \
         -name '*~' -o -name "*.bak" \
-        \) -print0 \
-        | tee "$tmpfile" | xargs -0 echo rm
-   xargs -0 rm < "$tmpfile"
+        \) -print0 > "$tmpfile"
+
+   # On some systems, xargs does nothing when passed empty input.
+   # On others, it still happily tries to execute the command.
+   # So, make sure the file is non-empty before attempting anything.
+   if [ -s "$tmpfile" ]; then
+      xargs -0 echo rm < "$tmpfile"
+      xargs -0 rm < "$tmpfile"
+   fi
 
    rm "$tmpfile"
 }
