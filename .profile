@@ -34,11 +34,11 @@ shopt -s extglob
 # Use colour ls.
 # If this system is a Mac, target BSD ls.
 # Otherwise, assume that GNU ls is the default.
-if [[ "$(uname -s)" = 'Darwin' ]]; then
-   export CLICOLOR=1
-   export LSCOLORS=GxFxDxDxhxDgDxabagacad
-   alias ls='ls -F -G'
-else
+
+export CLICOLOR=1
+export LSCOLORS=GxFxDxDxhxDgDxabagacad
+
+if type -p dircolors >/dev/null 2>&1; then
    # Check the same directory as this file for configuration in case of testing.
    # Fall back to the home directory, although that's likely to be this directory.
    if [[ -r "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc ]]; then
@@ -46,6 +46,20 @@ else
    elif [[ -r "$HOME/.dircolorsrc" ]]; then 
       eval $(dircolors -b "$HOME/.dircolorsrc")
    fi
+elif type -p gdircolors >/dev/null 2>&1; then
+   # Check the same directory as this file for configuration in case of testing.
+   # Fall back to the home directory, although that's likely to be this directory.
+   if [[ -r "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc ]]; then
+      eval $(gdircolors -b "$(dirname "${BASH_SOURCE[0]}")"/.dircolorsrc)
+   elif [[ -r "$HOME/.dircolorsrc" ]]; then 
+      eval $(gdircolors -b "$HOME/.dircolorsrc")
+   fi
+fi
+
+if [[ "$(uname -s)" = 'Darwin' ]]; then
+   alias ls='ls -F -G'
+   alias gls='gls -F --color=auto'
+else
    alias ls='ls -F --color=auto'
 fi
 
