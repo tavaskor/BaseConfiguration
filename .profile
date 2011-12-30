@@ -80,7 +80,7 @@ alias info="info --vi-keys"
 # Then, run grep; any flags and the pattern to search for must be supplied, but
 # the arguments will follow automatically (so avoid the -r flag or providing
 # filenames to match)
-alias srcgrep='find . -name .svn -prune -o -name "*~" -prune -o -name ".nfs*" -prune -o -type f -print0 | xargs -0 grep --binary-files=without-match'
+alias srcgrep='find -L . -name .svn -prune -o -name .git -prune -o -name "*~" -prune -o -name ".nfs*" -prune -o -type f -print0 | xargs -0 grep --binary-files=without-match'
 
 # Check the status, ignoring files that are not in the repository.
 # Sometimes you want to see them, but often so many files are listed
@@ -143,11 +143,11 @@ absolute ()
    # If this gets this far... give up.
    # Overwrite the absolute function with one that will ignore
    # arguments and just dump an error message.
-   absolute () 
+   eval "$FUNCNAME () 
    { 
-      echo "Error: no $FUNCNAME command or substitute can be found" 1>&2;
+      echo 'Error: no $FUNCNAME command or substitute can be found' 1>&2;
       return 15
-   };
+   };";
    $FUNCNAME 
 }
 
@@ -170,7 +170,7 @@ cleanup () {
    # can be output before deletion.
    # Use file I/O to do this instead of internal string storage to 
    # simplify handling of the null character.
-   local tmpfile="/tmp/cleanup.$$"
+   local tmpfile="/tmp/$FUNCNAME.$$"
    touch "$tmpfile"
    chmod 600 "$tmpfile"
 
